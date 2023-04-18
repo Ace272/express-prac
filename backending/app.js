@@ -1,29 +1,28 @@
 const express = require('express');
 const morgan = require('morgan');
-//exploring more on middleware
+const mongoose = require('mongoose');
+const Blog = require('./models/blog');
+const { result } = require('lodash');
+
 // express app
 const app = express();
 
+// connect to mongodb
+const dbURI = 'mongodb+srv://elsan:querynomo@cluster0.19vu2lh.mongodb.net/nodening?retryWrites=true&w=majority';
+mongoose.connect(dbURI, {useNewURLParser: true, useUnifiedTopology: true})
+    .then((result) => app.listen(3000))
+    .catch((err) => console.log(err));
+
 //register view engine
 app.set('view engine', 'ejs');
-
-//listen for requests
-app.listen(3000);
 
 //middleware and static files
 app.use(express.static('public'));
 app.use(morgan('dev'));
 
+//routes
 app.get('/', (req,res) => {
-    // res.send('<p>home page</p>');
-    //res.sendFile('./views/index.ejs',{root: __dirname})
-
-    const blogs = [
-        {title: 'Nebicho finds eggs' , snippet: 'lorem is da epsum'},
-        {title: 'Kaliance finds stars', snippet: 'lorem is da epsum charmer'},
-        {title: 'How to defeat fetamlak', snippet: 'lorem is da epsum dancer'}
-    ];
-    res.render('index', {title: 'Home', blogs});
+    res.redirect('/blogs');
 });
 
 app.get('/about',(req,res) => {
@@ -32,10 +31,16 @@ app.get('/about',(req,res) => {
     res.render('about', {title: 'About'})
 });
 
-//redirects
-// app.get('/about-us', (req,res) => {
-//     res.redirect('/about');
-// });
+//blog routes
+app.get('/blogs', (req,res) => {
+    Blog.find().sort({ createdAt: -1})
+        .then((result) => {
+            res.render('index' ,{title: 'All Blogs', blogs: result});
+        })
+        .catch((err) => {
+            console.log(err);
+        })
+})
 
 app.get('/blogs/create', (req,res) => {
     res.render('create', {title: 'create'});
